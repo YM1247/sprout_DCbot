@@ -1,8 +1,11 @@
 #include <templatebot/templatebot.h>
 #include <sstream>
+#include <fstream>
+#include <iostream>
+#include <cstdio>
 #include <string>
 #include <random>
-
+#include <string.h>
 
 /* When you invite the bot, be sure to invite it with the
  * scopes 'bot' and 'applications.commands', e.g.
@@ -65,6 +68,85 @@ int main(int argc, char const* argv[])
                 event.reply("Guess a smaller number!");
             }
         }
+        if (event.command.get_command_name() == "write"){
+            dpp::interaction_modal_response modal("diary", "Please enter your diary");
+            modal.add_component(
+                dpp::component().
+                set_label("DATE (IN FORMS OF YYYYMMDD)").
+                set_id("field_id").
+                set_type(dpp::cot_text).
+                set_placeholder("YYYYMMDD").
+                set_min_length(1).
+                set_max_length(50).
+                set_text_style(dpp::text_short)
+            );
+            modal.add_row();
+            modal.add_component(
+                dpp::component().
+                set_label("TITLE").
+                set_id("寫個TITLE吧").
+                set_type(dpp::cot_text).
+                set_placeholder("寫個Title吧").
+                set_min_length(1).
+                set_max_length(2000).
+                set_text_style(dpp::text_paragraph)
+            );
+            modal.add_row();
+            modal.add_component(
+                dpp::component().
+                set_label("YOUR DIARY").
+                set_id("寫一篇日記").
+                set_type(dpp::cot_text).
+                set_placeholder("寫篇日記吧").
+                set_min_length(1).
+                set_max_length(2000).
+                set_text_style(dpp::text_paragraph)
+            );
+            event.dialog(modal);
+        }
+         if (event.command.get_command_name() == "read") {
+            std::string diary_date = std::get<std::string>(event.get_parameter("date"));
+            std::string file_name = diary_date + ".txt";
+            std::ifstream in;
+            in.open(file_name);
+            if (in.fail()){
+                in.close();
+                event.reply(std::string("Diary not found!!!!"));              
+            }
+            else{   
+                std::string date, title, diary;
+                getline(in, date);
+                getline(in, title);
+                while(!in.eof())getline(in, diary);
+                in.close();
+                dpp::embed embed = dpp::embed().
+                    set_color(dpp::colors::sti_blue).
+                    set_title(title).
+                    add_field(
+                        "Date",
+                        date
+                    ).
+                    add_field(
+                        "Content",
+                        diary,
+                        true
+                    ).
+                    set_footer(dpp::embed_footer().set_text("My Diary at " + date)).
+                    set_timestamp(time(0));
+                dpp::message msg(bot.me.id, embed);
+                event.reply(msg);
+            }
+        }
+         if (event.command.get_command_name() == "remove") {
+            std::string diary_date = std::get<std::string>(event.get_parameter("date"));
+            std::string path = std::string(diary_date) + std::string(".txt");
+            if (std::remove(path.c_str()) == 0) {
+                event.reply("Diary deleted successfully :)");
+            } 
+            else {
+                event.reply("Diary deletion failed :(");
+            }
+        }
         // custom command: roll the dice
         if (event.command.get_command_name() == "roll") {
             int quantity = std::stoi(std::get<std::string>(event.get_parameter("quantity")));
@@ -107,6 +189,13 @@ int main(int argc, char const* argv[])
             dpp::slashcommand guess("guess", "Guess an integer between 1 and 100", bot.me.id);
             guess.add_option(dpp::command_option(dpp::co_string, "number_guess", "Please guess an integer between 1 and 100", true));
             bot.global_command_create(guess);
+            bot.global_command_create(dpp::slashcommand("write", "write your diary", bot.me.id));
+            dpp::slashcommand read("read", "read your diary", bot.me.id );
+            read.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
+            bot.global_command_create(read);
+            dpp::slashcommand remove("remove", "remove your diary", bot.me.id );
+            //remove.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
+            bot.global_command_create(remove);
 
             // custom command: roll the dice 
             dpp::slashcommand roll("roll", "roll the dice with custom quantity and faces", bot.me.id);
@@ -115,6 +204,21 @@ int main(int argc, char const* argv[])
             bot.global_command_create(roll);
         }
         });
+    bot.on_form_submit([&bot](const dpp::form_submit_t & event) {
+        std::string date = std::get<std::string>(event.components[0].components[0].value);
+        std::string title = std::get<std::string>(event.components[1].components[0].value);
+        std::string diary = std::get<std::string>(event.components[2].components[0].value);
+        std::string file_name = date + ".txt";
+        std::string input;
+        dpp::message m;
+        m.set_content("Date: " + date + '\n' + "Title: " + title + '\n' + "Content: " + diary).set_flags(dpp::m_ephemeral);
+        input = date + '\n' + title + '\n' + diary;
+        std::ofstream myfile;
+        myfile.open(file_name);
+        myfile << input;
+        myfile.close();
+        event.reply(m);
+    });
 
     /* Start the bot */
     bot.start(dpp::st_wait);
