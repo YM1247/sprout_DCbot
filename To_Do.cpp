@@ -65,6 +65,22 @@ int main(int argc, char const* argv[])
                 event.reply("Guess a smaller number!");
             }
         }
+        // custom command: roll the dice
+        if (event.command.get_command_name() == "roll") {
+            int quantity = std::stoi(std::get<std::string>(event.get_parameter("quantity")));
+            int faces = std::stoi(std::get<std::string>(event.get_parameter("faces")));
+            std::random_device rd;
+            int sum = 0;
+            std::string output = "";
+            for (int i = 0; i < quantity; i++) {
+                int tmp = rd() % faces + 1;
+                sum += tmp;
+                output += std::to_string(tmp);
+                output += " ";
+            }
+            output += "] sum: " + std::to_string(sum);
+            event.reply(std::string("[roll] The result is [") + output);
+        }
         });
 
     /* Register slash command here in on_ready */
@@ -91,6 +107,12 @@ int main(int argc, char const* argv[])
             dpp::slashcommand guess("guess", "Guess an integer between 1 and 100", bot.me.id);
             guess.add_option(dpp::command_option(dpp::co_string, "number_guess", "Please guess an integer between 1 and 100", true));
             bot.global_command_create(guess);
+
+            // custom command: roll the dice 
+            dpp::slashcommand roll("roll", "roll the dice with custom quantity and faces", bot.me.id);
+            roll.add_option(dpp::command_option(dpp::co_string, "quantity", "Please enter an integer of the quantity of dice", true));
+            roll.add_option(dpp::command_option(dpp::co_string, "faces", "Please enter an integer of the faces of dice", true));
+            bot.global_command_create(roll);
         }
         });
 
