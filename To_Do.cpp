@@ -198,7 +198,7 @@ int main(int argc, char const* argv[])
             read.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(read);
             dpp::slashcommand remove("remove", "remove your diary", bot.me.id );
-            //remove.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
+            remove.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(remove);
 
             // custom command: roll the dice 
