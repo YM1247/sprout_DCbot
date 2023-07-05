@@ -89,7 +89,7 @@ int main(int argc, char const* argv[])
                 set_placeholder("寫個Title吧").//標題
                 set_min_length(1).
                 set_max_length(2000).
-                set_text_style(dpp::text_paragraph)
+                set_text_style(dpp::text_short)
             );
             modal.add_row();
             modal.add_component(
@@ -117,7 +117,11 @@ int main(int argc, char const* argv[])
                 std::string date, title, diary;
                 getline(in, date);
                 getline(in, title);
-                while(!in.eof())getline(in, diary);
+                while(!in.eof()){
+                    std::string tmp;
+                    in >> tmp;
+                    diary += tmp + '\n';
+                }
                 in.close();
                 dpp::embed embed = dpp::embed().
                     set_color(dpp::colors::sti_blue).
