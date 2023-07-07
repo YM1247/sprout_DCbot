@@ -210,29 +210,37 @@ int main(int argc, char const* argv[])
         /* Wrap command registration in run_once to make sure it doesnt run on every full reconnection */
         if (dpp::run_once<struct register_bot_commands>()) {
             bot.global_command_create(dpp::slashcommand("ping", "Ping pong!", bot.me.id));
+            
             dpp::slashcommand greeting("greeting", "Say Hello to the given username", bot.me.id);
             greeting.add_option(dpp::command_option(dpp::co_string, "username", "Please enter username", true));
             bot.global_command_create(greeting);
+            
             dpp::slashcommand add("add", "add two integer", bot.me.id);
             add.add_option(dpp::command_option(dpp::co_string, "number_1", "Please enter an integer", true));
             add.add_option(dpp::command_option(dpp::co_string, "number_2", "Please enter an integer", true));
+            
             bot.global_command_create(add);
             dpp::slashcommand sub("sub", "substract two integer", bot.me.id);
             sub.add_option(dpp::command_option(dpp::co_string, "number_1", "Please enter an integer", true));
             sub.add_option(dpp::command_option(dpp::co_string, "number_2", "Please enter an integer", true));
             bot.global_command_create(sub);
+            
             dpp::slashcommand mul("mul", "multify two integer", bot.me.id);
             mul.add_option(dpp::command_option(dpp::co_string, "number_1", "Please enter an integer", true));
             mul.add_option(dpp::command_option(dpp::co_string, "number_2", "Please enter an integer", true));
             bot.global_command_create(mul);
+            
             bot.global_command_create(dpp::slashcommand("reset", "Ramdomly generate an integer between 1 and 100", bot.me.id));
+            
             dpp::slashcommand guess("guess", "Guess an integer between 1 and 100", bot.me.id);
             guess.add_option(dpp::command_option(dpp::co_string, "number_guess", "Please guess an integer between 1 and 100", true));
             bot.global_command_create(guess);
+            
             bot.global_command_create(dpp::slashcommand("write", "write your diary", bot.me.id));
             dpp::slashcommand read("read", "read your diary", bot.me.id);
             read.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(read);
+            
             dpp::slashcommand remove("remove", "remove your diary", bot.me.id);
             remove.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(remove);
