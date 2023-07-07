@@ -6,6 +6,8 @@
 #include <string>
 #include <random>
 #include <string.h>
+#include <vector>
+
 
 /* When you invite the bot, be sure to invite it with the
  * scopes 'bot' and 'applications.commands', e.g.
@@ -15,6 +17,8 @@
 const std::string bot_token = "Token";
 
 int target;
+
+std::vector<std::string> todoList;
 
 int main(int argc, char const* argv[])
 {
@@ -68,7 +72,7 @@ int main(int argc, char const* argv[])
                 event.reply("Guess a smaller number!");
             }
         }
-        if (event.command.get_command_name() == "write"){
+        if (event.command.get_command_name() == "write") {
             dpp::interaction_modal_response modal("diary", "Please enter your diary");
             modal.add_component(
                 dpp::component().
@@ -104,20 +108,20 @@ int main(int argc, char const* argv[])
             );
             event.dialog(modal);
         }
-         if (event.command.get_command_name() == "read") {
+        if (event.command.get_command_name() == "read") {
             std::string diary_date = std::get<std::string>(event.get_parameter("date"));
             std::string file_name = diary_date + ".txt";//找檔名是日期+.txt的檔案
             std::ifstream in;
             in.open(file_name);
-            if (in.fail()){//失敗
+            if (in.fail()) {//失敗
                 in.close();
-                event.reply(std::string("Diary not found!!!!"));              
+                event.reply(std::string("Diary not found!!!!"));
             }
-            else{//成功
+            else {//成功
                 std::string date, title, diary;
                 getline(in, date);
                 getline(in, title);
-                while(!in.eof()){
+                while (!in.eof()) {
                     std::string tmp;
                     in >> tmp;
                     diary += tmp + '\n';
@@ -141,12 +145,12 @@ int main(int argc, char const* argv[])
                 event.reply(msg);
             }
         }
-         if (event.command.get_command_name() == "remove") {
+        if (event.command.get_command_name() == "remove") {
             std::string diary_date = std::get<std::string>(event.get_parameter("date"));
             std::string path = std::string(diary_date) + std::string(".txt");//找檔名是日期+.txt的檔案(相對路徑)
             if (std::remove(path.c_str()) == 0) {//成功
                 event.reply("Diary deleted successfully :)");
-            } 
+            }
             else {//失敗
                 event.reply("Diary deletion failed :(");
             }
@@ -166,6 +170,38 @@ int main(int argc, char const* argv[])
             }
             output += "] sum: " + std::to_string(sum);
             event.reply(std::string("[roll] The result is [") + output);
+        }
+
+        // custom command: To Do List
+        if (event.command.get_command_name() == "todo_add") { // 新增
+            std::string name = std::get<std::string>(event.get_parameter("name"));
+            todoList.push_back(name);
+            event.reply("[ToDo_add] add successfully");
+        }
+        if (event.command.get_command_name() == "todo_show") { // 顯示to do list
+            if (todoList.empty()) {
+                event.reply("[ToDo_show] to do list is empty!");
+            }
+            else {
+                std::string output = "";
+                for (int i = 0; i < todoList.size(); i++) {
+                    if (!todoList[i].empty()) output += "* " + todoList[i] + "\n";
+                }
+                event.reply(std::string("[ToDo_show] to do list:\n") + output);
+            }
+        }
+        if (event.command.get_command_name() == "todo_delete") { // 移除
+            std::string name = std::get<std::string>(event.get_parameter("name"));
+            bool found = false;
+            for (int i = 0; i < todoList.size(); i++) {
+                if (todoList[i] == name) {
+                    found = true;
+                    todoList.erase(todoList.begin() + i);
+                    event.reply(std::string("[ToDo_delete] delete successfully: ") + name);
+                    break;
+                }
+            }
+            if (!found) event.reply("[ToDo_delete] delete failed");
         }
         });
 
@@ -194,10 +230,10 @@ int main(int argc, char const* argv[])
             guess.add_option(dpp::command_option(dpp::co_string, "number_guess", "Please guess an integer between 1 and 100", true));
             bot.global_command_create(guess);
             bot.global_command_create(dpp::slashcommand("write", "write your diary", bot.me.id));
-            dpp::slashcommand read("read", "read your diary", bot.me.id );
+            dpp::slashcommand read("read", "read your diary", bot.me.id);
             read.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(read);
-            dpp::slashcommand remove("remove", "remove your diary", bot.me.id );
+            dpp::slashcommand remove("remove", "remove your diary", bot.me.id);
             remove.add_option(dpp::command_option(dpp::co_string, "date", "Please enter a date(YYYYMMDD)", true));
             bot.global_command_create(remove);
 
@@ -206,9 +242,19 @@ int main(int argc, char const* argv[])
             roll.add_option(dpp::command_option(dpp::co_string, "quantity", "Please enter an integer of the quantity of dice", true));
             roll.add_option(dpp::command_option(dpp::co_string, "faces", "Please enter an integer of the faces of dice", true));
             bot.global_command_create(roll);
+
+            // custom command: To Do List
+            dpp::slashcommand ToDo_add("todo_add", "add new item in your to do list", bot.me.id);
+            ToDo_add.add_option(dpp::command_option(dpp::co_string, "name", "Please enter the name of thing you need to do", true));
+            bot.global_command_create(ToDo_add);
+            dpp::slashcommand ToDo_show("todo_show", "display your to do list", bot.me.id);
+            bot.global_command_create(ToDo_show);
+            dpp::slashcommand ToDo_delete("todo_delete", "delete item from your to do list", bot.me.id);
+            ToDo_delete.add_option(dpp::command_option(dpp::co_string, "name", "Please enter the name of thing you want to remove", true));
+            bot.global_command_create(ToDo_delete);
         }
         });
-    bot.on_form_submit([&bot](const dpp::form_submit_t & event) {
+    bot.on_form_submit([&bot](const dpp::form_submit_t& event) {
         std::string date = std::get<std::string>(event.components[0].components[0].value);//最上面的輸入框框
         std::string title = std::get<std::string>(event.components[1].components[0].value);//中間的輸入框框
         std::string diary = std::get<std::string>(event.components[2].components[0].value);//下面的輸入框框
@@ -222,7 +268,7 @@ int main(int argc, char const* argv[])
         myfile << input;
         myfile.close();
         event.reply(m);//輸出給使用者看他打了甚麼
-    });
+        });
 
     /* Start the bot */
     bot.start(dpp::st_wait);
